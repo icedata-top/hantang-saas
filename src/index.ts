@@ -28,4 +28,41 @@ app.get("/video/:id", async (c) => {
   });
 });
 
+app.get("/gettasks", async (c) => {
+  const apibase = c.env.APIBASE;
+  const response = await fetch(`${apibase}/get_video_static_by_priority`);
+  const json: TaskResponse = (await response.json()) as TaskResponse;
+
+  if (json.status !== "success") {
+    return c.json({ error: "Failed to fetch tasks" }, 500);
+  }
+
+  const aids = json.result
+    .map((item) => item.aid)
+    .filter((aid) => typeof aid === "number") as number[];
+
+  return c.json({ aids });
+});
+
+app.get("/starttask", async (c) => {
+  const apibase = c.env.APIBASE;
+  const response = await fetch(`${apibase}/get_video_static_by_priority`);
+  const json: TaskResponse = (await response.json()) as TaskResponse;
+
+  if (json.status !== "success") {
+    return c.json({ error: "Failed to fetch tasks" }, 500);
+  }
+
+  const aids = json.result
+    .map((item) => item.aid)
+    .filter((aid) => typeof aid === "number") as number[];
+
+  console.log(`Starting task with ${aids.length} videos`);
+
+  const data: BiliResponse = (await batchGetVideoInfo(aids)) as BiliResponse;
+  if (data.message !== "success") {
+    return c.json({ error: "Failed to fetch video info" }, 500);
+  }
+});
+
 export default app;
