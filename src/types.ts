@@ -112,3 +112,10 @@ export interface Upper {
   vip_statue: number;
   vip_type: number;
 }
+
+export interface BackendResponse {
+  status: "success" | string;
+  message: string;
+  result?: any;
+  details?: any;
+}
