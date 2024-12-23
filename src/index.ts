@@ -8,60 +8,25 @@ type Bindings = {
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-app.get("/", async (c) => {
-  const apibase = c.env.APIBASE;
-
-  let data = await fetch(`${apibase}`);
-
-  let json = await data.json();
-
-  return new Response(JSON.stringify(json), {
-    headers: { "content-type": "application/json" },
-  });
-});
-
-app.get("/video/:id", async (c) => {
-  const id = parseInt(c.req.param("id"));
-  const data = await getVideoInfoApi([id]);
-  return new Response(data, {
-    headers: { "content-type": "application/json" },
-  });
-});
-
-app.get("/gettasks", async (c) => {
-  const apibase = c.env.APIBASE;
+async function fetchTasks(apibase: string): Promise<number[]> {
   const response = await fetch(`${apibase}/get_video_static_by_priority`);
   const json: TaskResponse = (await response.json()) as TaskResponse;
 
   if (json.status !== "success") {
-    return c.json({ error: "Failed to fetch tasks" }, 500);
+    throw new Error("Failed to fetch tasks");
   }
 
-  const aids = json.result
+  return json.result
     .map((item) => item.aid)
     .filter((aid) => typeof aid === "number") as number[];
+}
 
-  return c.json({ aids });
-});
-
-app.get("/starttask", async (c) => {
-  const apibase = c.env.APIBASE;
-  const response = await fetch(`${apibase}/get_video_static_by_priority`);
-  const json: TaskResponse = (await response.json()) as TaskResponse;
-
-  if (json.status !== "success") {
-    return c.json({ error: "Failed to fetch tasks" }, { status: 500 });
-  }
-
-  const aids = json.result
-    .map((item) => item.aid)
-    .filter((aid) => typeof aid === "number") as number[];
-
+async function processVideoTasks(apibase: string, aids: number[]) {
   console.log(`Starting task with ${aids.length} videos`);
 
   const data: BiliResponse = (await batchGetVideoInfo(aids)) as BiliResponse;
   if (data.message !== "success") {
-    return c.json({ error: "Failed to fetch video info" }, { status: 500 });
+    throw new Error("Failed to fetch video info");
   }
 
   const videoMinutes = data.data.map((video) => ({
@@ -87,14 +52,14 @@ app.get("/starttask", async (c) => {
     });
 
     if (!postResponse.ok) {
+      const errorText = await postResponse.text();
       console.error(
         "Failed to add video minutes:",
         postResponse.status,
-        await postResponse.text()
+        errorText
       );
-      return c.json(
-        { error: "Failed to add video minutes" },
-        { status: postResponse.status }
+      throw new Error(
+        `Failed to add video minutes: ${postResponse.status} - ${errorText}`
       );
     }
 
@@ -102,24 +67,69 @@ app.get("/starttask", async (c) => {
       (await postResponse.json()) as BackendResponse;
     if (postResult.status === "success") {
       console.log("Successfully added video minutes:", postResult);
-      return c.json({
+      return {
         message: "Successfully added video minutes",
         result: postResult,
-      });
+      };
     } else {
       console.error("Failed to add video minutes:", postResult);
-      return c.json(
-        { error: "Failed to add video minutes", details: postResult },
-        { status: 500 }
+      throw new Error(
+        `Failed to add video minutes: ${JSON.stringify(postResult)}`
       );
     }
   } catch (error) {
     console.error("Error sending request to backend:", error);
-    return c.json(
-      { error: "Error sending request to backend", details: error },
-      { status: 500 }
-    );
+    throw new Error(`Error sending request to backend: ${error}`);
+  }
+}
+
+app.get("/", async (c) => {
+  const apibase = c.env.APIBASE;
+
+  try {
+    const data = await fetch(`${apibase}`);
+    const json = await data.json() as Record<string, unknown>;
+    return c.json(json);
+  } catch (error) {
+    console.error("Error fetching base API:", error);
+    return c.json({ error: "Failed to fetch base API" }, 500);
   }
 });
 
-export default app;
+app.get("/video/:id", async (c) => {
+  const id = parseInt(c.req.param("id"));
+  try {
+    const data = await getVideoInfoApi([id]);
+    return new Response(data, {
+      headers: { "content-type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Error fetching video info:", error);
+    return c.json({ error: "Failed to fetch video info" }, 500);
+  }
+});
+
+app.get("/gettasks", async (c) => {
+  const apibase = c.env.APIBASE;
+  try {
+    const aids = await fetchTasks(apibase);
+    return c.json({ aids });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+app.get("/starttask", async (c) => {
+  const apibase = c.env.APIBASE;
+  try {
+    const aids = await fetchTasks(apibase);
+    const result = await processVideoTasks(apibase, aids);
+    return c.json(result);
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+export default {
+  fetch: app.fetch,
+};
