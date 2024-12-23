@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@ahmedrangel/rand-user-agent':
+        specifier: ^2.0.22
+        version: 2.0.22
       hono:
         specifier: ^4.6.14
         version: 4.6.14
@@ -20,6 +23,10 @@ importers:
         version: 3.99.0(@cloudflare/workers-types@4.20241218.0)
 
 packages:
+
+  '@ahmedrangel/rand-user-agent@2.0.22':
+    resolution: {integrity: sha512-zcWz/D8d+wIU+HeMUIkX/KWtiUGs2Xg97SJhvGc61yYvcGMMa9HzTlfr1+WdyKBK0365y1XIk4Ij3Ot/lW6Tmg==}
+    engines: {node: '>=17.1.0'}
 
   '@cloudflare/kv-asset-handler@0.3.4':
     resolution: {integrity: sha512-YLPHc8yASwjNkmcDMQMY35yiWjoKAKnhUbPRszBRS0YgH+IXtsMp61j+yTcnCE3oO2DgP0U3iejLC8FTtKDC8Q==}
@@ -452,6 +459,8 @@ packages:
     resolution: {integrity: sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==}
 
 snapshots:
+
+  '@ahmedrangel/rand-user-agent@2.0.22': {}
 
   '@cloudflare/kv-asset-handler@0.3.4':
     dependencies:

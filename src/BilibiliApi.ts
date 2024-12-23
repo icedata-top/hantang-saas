@@ -1,18 +1,4 @@
-// getVideoInfoApi.ts
-
-const USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Mobile/15E148 Safari/604.1"
-];
-
-// 生成随机User-Agent
-function getRandomUserAgent() {
-    const randomIndex = Math.floor(Math.random() * USER_AGENTS.length);
-    return USER_AGENTS[randomIndex];
-}
+import { randUA } from "@ahmedrangel/rand-user-agent";
 
 // 生成随机的DedeUserID (10位整数)
 function getRandomDedeUserID() {
@@ -24,7 +10,7 @@ function getRandomDedeUserID() {
 async function callApiByUrlString(urlString: string): Promise<string> {
     try {
         const startTime = Date.now();
-        const userAgent = getRandomUserAgent();
+        const userAgent = randUA("desktop")
         const dedeUserID = getRandomDedeUserID();
 
         const headers = new Headers({
@@ -40,10 +26,10 @@ async function callApiByUrlString(urlString: string): Promise<string> {
         if (response.status === 200) {
             const text = await response.text();
             const deltaTime = Date.now() - startTime;
-            console.log(`Successfully get HTTP response from Bilibili. Time: ${deltaTime} ms, URL: ${urlString}`);
+            console.log(`Successfully get HTTP response from Bilibili. Time: ${deltaTime} ms, URL: ${urlString}, ua: ${userAgent}`);
             return text;
         } else {
-            console.error(`Failed to fetch video info. HTTP response code: ${response.status}, URL: ${urlString}`);
+            console.error(`Failed to fetch video info. HTTP response code: ${response.status}, URL: ${urlString}, ua: ${userAgent}`);
             throw new Error(`Failed to fetch video info. HTTP response code: ${response.status}`);
         }
     } catch (e: any) {
