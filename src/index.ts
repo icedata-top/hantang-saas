@@ -88,7 +88,7 @@ app.get("/", async (c) => {
 
   try {
     const data = await fetch(`${apibase}`);
-    const json = await data.json() as Record<string, unknown>;
+    const json = (await data.json()) as Record<string, unknown>;
     return c.json(json);
   } catch (error) {
     console.error("Error fetching base API:", error);
@@ -132,4 +132,18 @@ app.get("/starttask", async (c) => {
 
 export default {
   fetch: app.fetch,
+  async scheduled(event: ScheduledEvent, env: Bindings, ctx: ExecutionContext) {
+    const apibase = env.APIBASE;
+    console.log("Cron trigger executed at:", new Date().toISOString());
+    try {
+      const aids = await fetchTasks(apibase);
+      if (aids.length > 0) {
+        await processVideoTasks(apibase, aids);
+      } else {
+        console.log("No tasks to process.");
+      }
+    } catch (error: any) {
+      console.error("Error during scheduled task:", error);
+    }
+  },
 };
