@@ -87,21 +87,38 @@ app.get("/starttask", async (c) => {
     });
 
     if (!postResponse.ok) {
-      console.error("Failed to add video minutes:", postResponse.status, await postResponse.text());
-      return c.json({ error: "Failed to add video minutes" }, { status: postResponse.status });
+      console.error(
+        "Failed to add video minutes:",
+        postResponse.status,
+        await postResponse.text()
+      );
+      return c.json(
+        { error: "Failed to add video minutes" },
+        { status: postResponse.status }
+      );
     }
 
-    const postResult: BackendResponse = await postResponse.json() as BackendResponse;
+    const postResult: BackendResponse =
+      (await postResponse.json()) as BackendResponse;
     if (postResult.status === "success") {
       console.log("Successfully added video minutes:", postResult);
-      return c.json({ message: "Successfully added video minutes", result: postResult });
+      return c.json({
+        message: "Successfully added video minutes",
+        result: postResult,
+      });
     } else {
       console.error("Failed to add video minutes:", postResult);
-      return c.json({ error: "Failed to add video minutes", details: postResult }, { status: 500 });
+      return c.json(
+        { error: "Failed to add video minutes", details: postResult },
+        { status: 500 }
+      );
     }
   } catch (error) {
     console.error("Error sending request to backend:", error);
-    return c.json({ error: "Error sending request to backend", details: error }, { status: 500 });
+    return c.json(
+      { error: "Error sending request to backend", details: error },
+      { status: 500 }
+    );
   }
 });
 
