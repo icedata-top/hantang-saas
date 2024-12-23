@@ -1,30 +1,31 @@
-import { Hono } from 'hono'
-import { getVideoInfoApi } from './BilibiliApi'
+import { Hono } from "hono";
+import { getVideoInfoApi, batchGetVideoInfo } from "./BilibiliApi";
+import { TaskResponse, BiliResponse } from "./types";
 
 type Bindings = {
-  APIBASE: string
-}
+  APIBASE: string;
+};
 
-const app = new Hono<{ Bindings: Bindings }>()
+const app = new Hono<{ Bindings: Bindings }>();
 
-app.get('/', async (c) => {
-  const apibase = c.env.APIBASE
+app.get("/", async (c) => {
+  const apibase = c.env.APIBASE;
 
-  let data = await fetch(`${apibase}`)
+  let data = await fetch(`${apibase}`);
 
-  let json = await data.json()
+  let json = await data.json();
 
   return new Response(JSON.stringify(json), {
-    headers: { 'content-type': 'application/json' },
-  })
-})
+    headers: { "content-type": "application/json" },
+  });
+});
 
-app.get('/video/:id', async (c) => {
-  const id = parseInt(c.req.param('id'))
-  const data = await getVideoInfoApi([id])
+app.get("/video/:id", async (c) => {
+  const id = parseInt(c.req.param("id"));
+  const data = await getVideoInfoApi([id]);
   return new Response(data, {
-    headers: { 'content-type': 'application/json' },
-  })
-})
+    headers: { "content-type": "application/json" },
+  });
+});
 
-export default app
+export default app;
