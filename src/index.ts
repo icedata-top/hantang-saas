@@ -9,16 +9,23 @@ function getAPIBASE() {
 const app = new Hono();
 
 async function fetchTasks(apibase: string): Promise<number[]> {
-  const response = await fetch(`${apibase}/get_video_static_by_priority`);
-  const json: TaskResponse = (await response.json()) as TaskResponse;
+  try {
+    const response = await fetch(`${apibase}/get_video_static_by_priority`);
+    const json: TaskResponse = (await response.json()) as TaskResponse;
 
-  if (json.status !== "success") {
-    throw new Error("Failed to fetch tasks");
+    if (json.status !== "success") {
+      throw new Error("Failed to fetch tasks");
+    }
+
+    return json.result
+      .map((item) => item.aid)
+      .filter((aid) => typeof aid === "number") as number[];
   }
-
-  return json.result
-    .map((item) => item.aid)
-    .filter((aid) => typeof aid === "number") as number[];
+  catch (error) {
+    console.error("Error fetching tasks:", error);
+    console.log("Error fetching tasks:", error, "APIBASE:", apibase);
+    throw new Error(`Error fetching tasks: ${error}`);
+  }
 }
 
 export async function processVideoTasks() {

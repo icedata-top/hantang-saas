@@ -16,5 +16,6 @@
     ],
     "include": [],
     "entrypoint": "main.ts"
-  }
+  },
+  "unstable": ["sloppy-imports", "cron"]
 }
