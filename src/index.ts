@@ -1,9 +1,9 @@
 import { Hono } from "hono";
-import { getVideoInfoApi, batchGetVideoInfo } from "./BilibiliApi";
-import { TaskResponse, BiliResponse, BackendResponse } from "./types";
+import { getVideoInfoApi, batchGetVideoInfo } from "./BilibiliApi.ts";
+import { TaskResponse, BiliResponse, BackendResponse } from "./types.ts";
 
 function getAPIBASE() {
-  return Deno.env.get("APIBASE") || "http://localhost:3000";
+  return Deno.env.get("APIBASE") || "http://localhost:8000";
 }
 
 const app = new Hono();
@@ -85,6 +85,7 @@ async function processVideoTasks(apibase: string, aids: number[]) {
 
 app.get("/", async (c) => {
   const apibase = getAPIBASE();
+  console.log("Fetching base API:", apibase);
 
   try {
     const data = await fetch(`${apibase}`);
