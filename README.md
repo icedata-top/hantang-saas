@@ -1,19 +1,7 @@
 # Project Setup
 
 ```
-pnpm install
-```
-
-## Development
-
-```
-pnpm run dev
-```
-
-## Deployment 
-
-```
-pnpm run deploy
+deno task start
 ```
 
 ## Setting up Secrets
