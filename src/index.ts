@@ -68,7 +68,7 @@ export async function processVideoTasks() {
     const postResult: BackendResponse =
       (await postResponse.json()) as BackendResponse;
     if (postResult.status === "success") {
-      console.log("Successfully added video minutes:", postResult);
+      console.log("Successfully added video minutes");
       return {
         message: "Successfully added video minutes",
         result: postResult,
