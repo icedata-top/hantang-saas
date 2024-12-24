@@ -1,7 +1,5 @@
 import { app, processVideoTasks } from './src/index.ts'
 
-// const app = new Hono()
-
 app.get('/', (c) => {
   return c.text('Hello Hono!')
 })
