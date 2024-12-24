@@ -78,61 +78,61 @@ export async function getVideoInfoApi(aidList: number[]): Promise<string> {
  * @returns 合并后的数据对象
  */
 function mergeResponses(responses: string[]): any {
-    const mergedData: any = {
-      code: 0,
-      data: [],
-      message: "success",
-    };
-  
-    for (const response of responses) {
-      const parsedResponse = JSON.parse(response);
-      if (parsedResponse.code !== 0) {
-        // 如果有任何一个请求失败，返回错误信息
-        return parsedResponse;
-      }
-      mergedData.data.push(...parsedResponse.data);
+  const mergedData: any = {
+    code: 0,
+    data: [],
+    message: "success",
+  };
+
+  for (const response of responses) {
+    const parsedResponse = JSON.parse(response);
+    if (parsedResponse.code !== 0) {
+      // 如果有任何一个请求失败，返回错误信息
+      return parsedResponse;
     }
-  
-    return mergedData;
+    mergedData.data.push(...parsedResponse.data);
   }
-  
-  /**
-   * 批量获取视频信息，自动分批处理，并合并结果。
-   *
-   * @param aidList 视频AV号列表
-   * @returns 合并后的 API 响应数据
-   */
-  export async function batchGetVideoInfo(aidList: number[]): Promise<any> {
-    const BATCH_SIZE = 50;
-    const MAX_BATCHES = 47;
-    const results: string[] = [];
-    const numAids = aidList.length;
-  
-    if (numAids < BATCH_SIZE) {
-      results.push(await getVideoInfoApi(aidList));
-    } else {
-      const batches: number[][] = [];
-      for (let i = 0; i < numAids; i += BATCH_SIZE) {
-        batches.push(aidList.slice(i, i + BATCH_SIZE));
-      }
-  
-      if (batches.length <= MAX_BATCHES) {
-        for (const batch of batches) {
-          results.push(await getVideoInfoApi(batch));
-        }
-      } else {
-        console.warn(`超过最大批次限制 (${MAX_BATCHES}批)，将随机处理部分批次。`);
-        // 随机选择 MAX_BATCHES 个批次进行处理
-        const shuffledIndices = [...Array(batches.length).keys()].sort(
-          () => Math.random() - 0.5
-        );
-        const selectedIndices = shuffledIndices.slice(0, MAX_BATCHES);
-        for (const index of selectedIndices) {
-          results.push(await getVideoInfoApi(batches[index]));
-        }
+
+  return mergedData;
+}
+
+/**
+ * 批量获取视频信息，自动分批处理，并合并结果。
+ *
+ * @param aidList 视频AV号列表
+ * @returns 合并后的 API 响应数据
+ */
+export async function batchGetVideoInfo(aidList: number[]): Promise<any> {
+  const BATCH_SIZE = 50;
+  const MAX_BATCHES = 47;
+  const results: string[] = []; 
+  const numAids = aidList.length;
+
+  const shuffledAidList = [...aidList].sort(() => Math.random() - 0.5);
+
+  if (numAids === 0) {
+    return [];
+  }
+
+  const batches: number[][] = [];
+
+  if (numAids <= MAX_BATCHES * BATCH_SIZE) {
+    for (let i = 0; i < numAids; i += BATCH_SIZE) {
+      batches.push(shuffledAidList.slice(i, i + BATCH_SIZE));
+    }
+  } else {
+    const itemsPerBatch = Math.ceil(numAids / MAX_BATCHES);
+    for (let i = 0; i < numAids; i += itemsPerBatch) {
+      batches.push(shuffledAidList.slice(i, i + itemsPerBatch));
+      if (batches.length === MAX_BATCHES) {
+        break;
       }
     }
-  
-    return mergeResponses(results);
   }
-  
+
+  for (const batch of batches) {
+    results.push(await getVideoInfoApi(batch));
+  }
+
+  return mergeResponses(results);
+}
