@@ -8,7 +8,7 @@ app.get('/', (c) => {
 
 Deno.serve({ port: 8787 },app.fetch)
 
-Deno.cron("minut add", "* * * * *", async () => {
+Deno.cron("minute add", "* * * * *", async () => {
   const timenow = new Date().toISOString();
   console.log("cron job running every minute");
   const result = await processVideoTasks();
