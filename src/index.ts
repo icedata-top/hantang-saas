@@ -17,11 +17,17 @@ async function fetchTasks(apibase: string): Promise<number[]> {
       throw new Error("Failed to fetch tasks");
     }
 
+    const currentTimestampMinutes = Math.floor(Date.now() / 1000 / 60);
+
     return json.result
-      .map((item) => item.aid)
-      .filter((aid) => typeof aid === "number") as number[];
-  }
-  catch (error) {
+      .filter(
+        (item) =>
+          item.priority !== undefined &&
+          typeof item.priority === "number" &&
+          (currentTimestampMinutes + item.aid) % item.priority === 0
+      )
+      .map((item) => item.aid) as number[];
+  } catch (error) {
     console.error("Error fetching tasks:", error);
     console.log("Error fetching tasks:", error, "APIBASE:", apibase);
     throw new Error(`Error fetching tasks: ${error}`);
