@@ -26,6 +26,10 @@ export async function processVideoTasks() {
   const aids = await fetchTasks(apibase);
   console.log(`Starting task with ${aids.length} videos`);
 
+  if (aids.length === 0) {
+    return { message: "No tasks to process", result: { status: "success" } };
+  }
+
   const data: BiliResponse = (await batchGetVideoInfo(aids)) as BiliResponse;
   if (data.message !== "success") {
     throw new Error("Failed to fetch video info");
