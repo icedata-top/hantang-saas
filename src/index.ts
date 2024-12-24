@@ -21,7 +21,9 @@ async function fetchTasks(apibase: string): Promise<number[]> {
     .filter((aid) => typeof aid === "number") as number[];
 }
 
-async function processVideoTasks(apibase: string, aids: number[]) {
+export async function processVideoTasks() {
+  const apibase = getAPIBASE();
+  const aids = await fetchTasks(apibase);
   console.log(`Starting task with ${aids.length} videos`);
 
   const data: BiliResponse = (await batchGetVideoInfo(aids)) as BiliResponse;
@@ -122,10 +124,8 @@ app.get("/gettasks", async (c) => {
 });
 
 app.get("/starttask", async (c) => {
-  const apibase = getAPIBASE();
   try {
-    const aids = await fetchTasks(apibase);
-    const result = await processVideoTasks(apibase, aids);
+    const result = await processVideoTasks();
     return c.json(result);
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
