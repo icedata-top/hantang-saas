@@ -2,11 +2,11 @@ import { Hono } from "hono";
 import { getVideoInfoApi, batchGetVideoInfo } from "./BilibiliApi";
 import { TaskResponse, BiliResponse, BackendResponse } from "./types";
 
-type Bindings = {
-  APIBASE: string;
-};
+function getAPIBASE() {
+  return Deno.env.get("APIBASE") || "http://localhost:3000";
+}
 
-const app = new Hono<{ Bindings: Bindings }>();
+const app = new Hono();
 
 async function fetchTasks(apibase: string): Promise<number[]> {
   const response = await fetch(`${apibase}/get_video_static_by_priority`);
@@ -84,7 +84,7 @@ async function processVideoTasks(apibase: string, aids: number[]) {
 }
 
 app.get("/", async (c) => {
-  const apibase = c.env.APIBASE;
+  const apibase = getAPIBASE();
 
   try {
     const data = await fetch(`${apibase}`);
@@ -98,6 +98,7 @@ app.get("/", async (c) => {
 
 app.get("/video/:id", async (c) => {
   const id = parseInt(c.req.param("id"));
+  const apibase = getAPIBASE();
   try {
     const data = await getVideoInfoApi([id]);
     return new Response(data, {
@@ -110,7 +111,7 @@ app.get("/video/:id", async (c) => {
 });
 
 app.get("/gettasks", async (c) => {
-  const apibase = c.env.APIBASE;
+  const apibase = getAPIBASE();
   try {
     const aids = await fetchTasks(apibase);
     return c.json({ aids });
@@ -120,7 +121,7 @@ app.get("/gettasks", async (c) => {
 });
 
 app.get("/starttask", async (c) => {
-  const apibase = c.env.APIBASE;
+  const apibase = getAPIBASE();
   try {
     const aids = await fetchTasks(apibase);
     const result = await processVideoTasks(apibase, aids);
@@ -130,20 +131,4 @@ app.get("/starttask", async (c) => {
   }
 });
 
-export default {
-  fetch: app.fetch,
-  async scheduled(event: ScheduledEvent, env: Bindings, ctx: ExecutionContext) {
-    const apibase = env.APIBASE;
-    console.log("Cron trigger executed at:", new Date().toISOString());
-    try {
-      const aids = await fetchTasks(apibase);
-      if (aids.length > 0) {
-        await processVideoTasks(apibase, aids);
-      } else {
-        console.log("No tasks to process.");
-      }
-    } catch (error: any) {
-      console.error("Error during scheduled task:", error);
-    }
-  },
-};
+export { app };
