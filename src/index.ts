@@ -112,7 +112,6 @@ app.get("/", async (c) => {
 
 app.get("/video/:id", async (c) => {
   const id = parseInt(c.req.param("id"));
-  const apibase = getAPIBASE();
   try {
     const data = await getVideoInfoApi([id]);
     return new Response(data, {
