@@ -2,23 +2,27 @@
 
 ## Install Deno
 
-Check the [Deno installation guide](https://deno.land/manual/getting_started/installation) for the latest instructions.
+Check the
+[Deno installation guide](https://deno.land/manual/getting_started/installation)
+for the latest instructions.
 
 ## Setup API
 
-The API is a separate project. Check the [API README](https://github.com/icedata-top/hantang-api/blob/main/README.md) for instructions on setting up the API.
+The API is a separate project. Check the
+[API README](https://github.com/icedata-top/hantang-api/blob/main/README.md) for
+instructions on setting up the API.
 
 ## Local Development
 
 For local development, create a `.env` file in the project root:
 
-``` env
+```env
 APIBASE=your_api_base_here
 ```
 
 Then run the following command to start the server:
 
-``` bash
+```bash
 deno task start
 ```
 
@@ -26,6 +30,6 @@ deno task start
 
 For production, include the env flag when deploying:
 
-``` bash
+```bash
 deployctl deploy  --prod  main.ts --env
 ```

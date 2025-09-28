@@ -1,10 +1,10 @@
-import { app, processVideoTasks } from './src/index.ts'
+import { app, processVideoTasks } from "./src/index.ts";
 
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
-})
+app.get("/", (c) => {
+  return c.text("Hello Hono!");
+});
 
-Deno.serve({ port: 8787 },app.fetch)
+Deno.serve({ port: 8787 }, app.fetch);
 
 Deno.cron("minute add", "* * * * *", async () => {
   const timenow = new Date().toISOString();
@@ -12,7 +12,15 @@ Deno.cron("minute add", "* * * * *", async () => {
   const result = await processVideoTasks();
   const timeend = new Date().toISOString();
   const duration = new Date(timeend).getTime() - new Date(timenow).getTime();
-  console.log("Processed video tasks at", timenow, "and ended at", timeend, ", lasted for", duration, "ms");
+  console.log(
+    "Processed video tasks at",
+    timenow,
+    "and ended at",
+    timeend,
+    ", lasted for",
+    duration,
+    "ms",
+  );
   if (result.result.status !== "success") {
     console.error("Failed to process video tasks:", result);
   }

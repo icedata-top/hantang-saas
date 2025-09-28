@@ -27,23 +27,23 @@ async function callApiByUrlString(urlString: string): Promise<string> {
       const text = await response.text();
       const deltaTime = Date.now() - startTime;
       console.log(
-        `Successfully get HTTP response from Bilibili. Time: ${deltaTime} ms, URL: ${urlString}, ua: ${userAgent}`
+        `Successfully get HTTP response from Bilibili. Time: ${deltaTime} ms, URL: ${urlString}, ua: ${userAgent}`,
       );
       return text;
     } else {
       console.error(
-        `Failed to fetch video info. HTTP response code: ${response.status}, URL: ${urlString}, ua: ${userAgent}`
+        `Failed to fetch video info. HTTP response code: ${response.status}, URL: ${urlString}, ua: ${userAgent}`,
       );
       throw new Error(
-        `Failed to fetch video info. HTTP response code: ${response.status}`
+        `Failed to fetch video info. HTTP response code: ${response.status}`,
       );
     }
   } catch (e: any) {
     console.error(
-      `Failed to construct URL or fetch video info: ${e.message}, URL: ${urlString}`
+      `Failed to construct URL or fetch video info: ${e.message}, URL: ${urlString}`,
     );
     throw new Error(
-      `Failed to construct URL or fetch video info: ${e.message}`
+      `Failed to construct URL or fetch video info: ${e.message}`,
     );
   }
 }
@@ -55,9 +55,8 @@ async function callApiByUrlString(urlString: string): Promise<string> {
  * @return HTTP响应
  * @throws Error 如果请求失败或响应码不是200
  */
-export async function getVideoInfoApi(aidList: number[]): Promise<string> {
-  const baseUrl =
-    "https://api.bilibili.com/" +
+export function getVideoInfoApi(aidList: number[]): Promise<string> {
+  const baseUrl = "https://api.bilibili.com/" +
     "medialist" +
     "/gateway" +
     "/base" +
@@ -105,7 +104,7 @@ function mergeResponses(responses: string[]): any {
 export async function batchGetVideoInfo(aidList: number[]): Promise<any> {
   const BATCH_SIZE = 50;
   const MAX_BATCHES = 47;
-  const results: string[] = []; 
+  const results: string[] = [];
   const numAids = aidList.length;
 
   const shuffledAidList = [...aidList].sort(() => Math.random() - 0.5);

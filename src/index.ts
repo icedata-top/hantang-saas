@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import { getVideoInfoApi, batchGetVideoInfo } from "./BilibiliApi.ts";
-import { TaskResponse, BiliResponse, BackendResponse } from "./types.ts";
+import { batchGetVideoInfo, getVideoInfoApi } from "./BilibiliApi.ts";
+import { BackendResponse, BiliResponse, TaskResponse } from "./types.ts";
 
 function getAPIBASE() {
   return Deno.env.get("APIBASE") || "http://localhost:8000";
@@ -24,7 +24,7 @@ async function fetchTasks(apibase: string): Promise<number[]> {
         (item) =>
           item.priority !== undefined &&
           typeof item.priority === "number" &&
-          (currentTimestampMinutes + item.aid) % item.priority === 0
+          (currentTimestampMinutes + item.aid) % item.priority === 0,
       )
       .map((item) => item.aid) as number[];
   } catch (error) {
@@ -75,10 +75,10 @@ export async function processVideoTasks() {
       console.error(
         "Failed to add video minutes:",
         postResponse.status,
-        errorText
+        errorText,
       );
       throw new Error(
-        `Failed to add video minutes: ${postResponse.status} - ${errorText}`
+        `Failed to add video minutes: ${postResponse.status} - ${errorText}`,
       );
     }
 
@@ -93,7 +93,7 @@ export async function processVideoTasks() {
     } else {
       console.error("Failed to add video minutes:", postResult);
       throw new Error(
-        `Failed to add video minutes: ${JSON.stringify(postResult)}`
+        `Failed to add video minutes: ${JSON.stringify(postResult)}`,
       );
     }
   } catch (error) {
