@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { batchGetVideoInfo, getVideoInfoApi } from "./BilibiliApi.ts";
-import { BackendResponse, BiliResponse, TaskResponse } from "./types.ts";
+import { BackendResponse, BiliResponse, OverdueMinuteTaskResponse } from "./types.ts";
 
 function getAPIBASE() {
   return Deno.env.get("APIBASE") || "http://localhost:8000";
@@ -8,29 +8,35 @@ function getAPIBASE() {
 
 const app = new Hono();
 
+const FALLBACK_OVERDUE_SECONDS = 30;
+const FALLBACK_TASK_LIMIT = 50;
+
 async function fetchTasks(apibase: string): Promise<number[]> {
   try {
-    const response = await fetch(`${apibase}/get_video_static_by_priority`);
-    const json: TaskResponse = (await response.json()) as TaskResponse;
+    const url = new URL(`${apibase}/get_overdue_video_minute_tasks`);
+    url.searchParams.set("overdue_seconds", String(FALLBACK_OVERDUE_SECONDS));
+    url.searchParams.set("limit", String(FALLBACK_TASK_LIMIT));
 
-    if (json.status !== "success") {
-      throw new Error("Failed to fetch tasks");
+    const response = await fetch(url);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Failed to fetch overdue minute tasks: ${response.status} - ${errorText}`,
+      );
     }
 
-    const currentTimestampMinutes = Math.floor(Date.now() / 1000 / 60);
+    const json: OverdueMinuteTaskResponse =
+      (await response.json()) as OverdueMinuteTaskResponse;
 
-    return json.result
-      .filter(
-        (item) =>
-          item.priority !== undefined &&
-          typeof item.priority === "number" &&
-          (currentTimestampMinutes + item.aid) % item.priority === 0,
-      )
-      .map((item) => item.aid) as number[];
+    if (json.status !== "success") {
+      throw new Error("Failed to fetch overdue minute tasks");
+    }
+
+    return json.result.map((item) => item.aid) as number[];
   } catch (error) {
-    console.error("Error fetching tasks:", error);
-    console.log("Error fetching tasks:", error, "APIBASE:", apibase);
-    throw new Error(`Error fetching tasks: ${error}`);
+    console.error("Error fetching overdue minute tasks:", error);
+    console.log("Error fetching overdue minute tasks:", error, "APIBASE:", apibase);
+    throw new Error(`Error fetching overdue minute tasks: ${error}`);
   }
 }
 

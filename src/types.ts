@@ -1,18 +1,12 @@
-export interface TaskResponse {
+export interface OverdueMinuteTaskResponse {
   result: {
     aid: number;
-    bvid: string;
-    pubdate: number;
-    title: string;
-    description: string;
-    tag: string;
-    pic: string;
-    type_id: number;
-    user_id: number;
     priority: number;
+    next_minute_due_at: string;
+    overdue_seconds: number;
   }[];
   time: number;
-  status: "success" | string; // Assuming 'success' is the main success status
+  status: "success" | string;
 }
 
 export interface BiliResponse {
