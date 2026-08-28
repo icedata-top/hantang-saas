@@ -8,7 +8,7 @@ function getAPIBASE() {
 
 const app = new Hono();
 
-const FALLBACK_OVERDUE_SECONDS = 30;
+const FALLBACK_OVERDUE_SECONDS = 180;
 const FALLBACK_TASK_LIMIT = 250;
 
 async function fetchTasks(apibase: string): Promise<number[]> {
