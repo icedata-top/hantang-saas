@@ -1,4 +1,7 @@
 import { randUA } from "@ahmedrangel/rand-user-agent";
+import type { BatchedBiliResponse, BiliResponse } from "./types.ts";
+
+const REQUEST_TIMEOUT_MS = 120_000;
 
 // 生成随机的DedeUserID (10位整数)
 function getRandomDedeUserID() {
@@ -21,6 +24,7 @@ async function callApiByUrlString(urlString: string): Promise<string> {
     const response = await fetch(urlString, {
       method: "GET",
       headers: headers,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
 
     if (response.status === 200) {
@@ -72,45 +76,23 @@ export function getVideoInfoApi(aidList: number[]): Promise<string> {
 }
 
 /**
- * 合并 API 响应数据
- * @param responses API 响应的字符串数组
- * @returns 合并后的数据对象
- */
-function mergeResponses(responses: string[]): any {
-  const mergedData: any = {
-    code: 0,
-    data: [],
-    message: "success",
-  };
-
-  for (const response of responses) {
-    const parsedResponse = JSON.parse(response);
-    if (parsedResponse.code !== 0) {
-      // 如果有任何一个请求失败，返回错误信息
-      return parsedResponse;
-    }
-    mergedData.data.push(...parsedResponse.data);
-  }
-
-  return mergedData;
-}
-
-/**
- * 批量获取视频信息，自动分批处理，并合并结果。
+ * 批量获取视频信息，自动分批处理。
  *
  * @param aidList 视频AV号列表
- * @returns 合并后的 API 响应数据
+ * @returns 按请求批次保留采样时间的 API 响应数据
  */
-export async function batchGetVideoInfo(aidList: number[]): Promise<any> {
+export async function batchGetVideoInfo(
+  aidList: number[],
+): Promise<BatchedBiliResponse> {
   const BATCH_SIZE = 50;
   const MAX_BATCHES = 47;
-  const results: string[] = [];
+  const batchesWithTimestamps: BatchedBiliResponse["batches"] = [];
   const numAids = aidList.length;
 
   const shuffledAidList = [...aidList].sort(() => Math.random() - 0.5);
 
   if (numAids === 0) {
-    return [];
+    return { code: 0, batches: [], message: "success" };
   }
 
   const batches: number[][] = [];
@@ -130,8 +112,25 @@ export async function batchGetVideoInfo(aidList: number[]): Promise<any> {
   }
 
   for (const batch of batches) {
-    results.push(await getVideoInfoApi(batch));
+    const response = await getVideoInfoApi(batch);
+    const parsedResponse = JSON.parse(response) as BiliResponse;
+    if (parsedResponse.code !== 0) {
+      return {
+        code: parsedResponse.code,
+        batches: [],
+        message: parsedResponse.message,
+      };
+    }
+    if (!Array.isArray(parsedResponse.data)) {
+      throw new Error("Bilibili response is missing video data");
+    }
+    const sampledAt = Math.floor(Date.now() / 1000);
+
+    batchesWithTimestamps.push({
+      sampledAt,
+      videos: parsedResponse.data,
+    });
   }
 
-  return mergeResponses(results);
+  return { code: 0, batches: batchesWithTimestamps, message: "success" };
 }
