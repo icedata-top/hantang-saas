@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { batchGetVideoInfo, getVideoInfoApi } from "./BilibiliApi.ts";
-import { BackendResponse, BiliResponse, OverdueMinuteTaskResponse } from "./types.ts";
+import type { BackendResponse, OverdueMinuteTaskResponse } from "./types.ts";
 
 function getAPIBASE() {
   return Deno.env.get("APIBASE") || "http://localhost:8000";
@@ -8,8 +8,9 @@ function getAPIBASE() {
 
 const app = new Hono();
 
-const FALLBACK_OVERDUE_SECONDS = 30;
+const FALLBACK_OVERDUE_SECONDS = 180;
 const FALLBACK_TASK_LIMIT = 250;
+const REQUEST_TIMEOUT_MS = 120_000;
 
 async function fetchTasks(apibase: string): Promise<number[]> {
   try {
@@ -17,7 +18,9 @@ async function fetchTasks(apibase: string): Promise<number[]> {
     url.searchParams.set("overdue_seconds", String(FALLBACK_OVERDUE_SECONDS));
     url.searchParams.set("limit", String(FALLBACK_TASK_LIMIT));
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(
@@ -35,7 +38,12 @@ async function fetchTasks(apibase: string): Promise<number[]> {
     return json.result.map((item) => item.aid) as number[];
   } catch (error) {
     console.error("Error fetching overdue minute tasks:", error);
-    console.log("Error fetching overdue minute tasks:", error, "APIBASE:", apibase);
+    console.log(
+      "Error fetching overdue minute tasks:",
+      error,
+      "APIBASE:",
+      apibase,
+    );
     throw new Error(`Error fetching overdue minute tasks: ${error}`);
   }
 }
@@ -49,23 +57,25 @@ export async function processVideoTasks() {
     return { message: "No tasks to process", result: { status: "success" } };
   }
 
-  const data: BiliResponse = (await batchGetVideoInfo(aids)) as BiliResponse;
+  const data = await batchGetVideoInfo(aids);
   if (data.message !== "success") {
     throw new Error("Failed to fetch video info");
   }
 
-  const videoMinutes = data.data.map((video) => ({
-    time: Math.floor(Date.now() / 1000),
-    aid: video.id,
-    bvid: video.bvid,
-    coin: video.cnt_info.coin,
-    favorite: video.cnt_info.collect,
-    danmaku: video.cnt_info.danmaku,
-    view: video.cnt_info.play,
-    reply: video.cnt_info.reply,
-    share: video.cnt_info.share,
-    like: video.cnt_info.thumb_up,
-  }));
+  const videoMinutes = data.batches.flatMap((batch) =>
+    batch.videos.map((video) => ({
+      time: batch.sampledAt,
+      aid: video.id,
+      bvid: video.bvid,
+      coin: video.cnt_info.coin,
+      favorite: video.cnt_info.collect,
+      danmaku: video.cnt_info.danmaku,
+      view: video.cnt_info.play,
+      reply: video.cnt_info.reply,
+      share: video.cnt_info.share,
+      like: video.cnt_info.thumb_up,
+    }))
+  );
 
   try {
     const postResponse = await fetch(`${apibase}/add_video_minute_bulk`, {
@@ -74,6 +84,7 @@ export async function processVideoTasks() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(videoMinutes),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
 
     if (!postResponse.ok) {

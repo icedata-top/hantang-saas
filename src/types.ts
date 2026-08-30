@@ -15,6 +15,17 @@ export interface BiliResponse {
   message: string;
 }
 
+export interface BiliResponseBatch {
+  sampledAt: number;
+  videos: VideoInfo[];
+}
+
+export interface BatchedBiliResponse {
+  code: number;
+  batches: BiliResponseBatch[];
+  message: string;
+}
+
 export interface VideoInfo {
   attr: number;
   bv_id: string;
